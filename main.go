@@ -4,11 +4,13 @@ package main
 
 import (
   "fmt"
-  "net"
-  "net/rpc"
-  "strconv"
-  "log"
-  "net/http"
+  // "net"
+  // "net/rpc"
+  // "strconv"
+  // "log"
+  // "net/http"
+  "time"
+  "math/rand"
 )
 
 type Log struct {
@@ -38,18 +40,20 @@ func (t *Server) Respond(message *Message, reply *Message) error {
 const (
 	numServers = 5
 )
+
+// Timeout function
+func randomTimeout() {
+  sleep := rand.Intn(5)
+  fmt.Printf("sleeping for %v seconds\n", sleep)
+  time.Sleep(time.Second * time.Duration(sleep))
+}
+
 // Reference: https://golang.org/pkg/net/rpc/
 func spawnServer(server Server) {
-  fmt.Println(server.Id)
-  fmt.Println(server.Port)
-  rpc.Register(server.Id)
-  rpc.HandleHTTP()
-  listen, err := net.Listen("tcp", ":" + strconv.Itoa(server.Port))
-  if err != nil {
-	   log.Fatal("listen error:", err)
-   }
-   fmt.Println("Test")
-   go http.Serve(listen, nil)
+  fmt.Printf("Server %v is running\n", server.Id)
+  for i := 1; i > 0; i++ {
+    randomTimeout()
+  }
 }
 
 func main() {
@@ -62,7 +66,13 @@ func main() {
 
 	for i := 0; i < numServers; i++ {
 		go spawnServer(servers[i])
+    fmt.Printf("Thread %v spawned\n", servers[i].Id)
 	}
+
+
+  // for i := 0; i < 999999999999; i++ {
+  time.Sleep(time.Second * 10)
+  // }
   //
   // client, err := rpc.DialHTTP("tcp", "localhost:50004")
   // if err != nil {
