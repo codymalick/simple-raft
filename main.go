@@ -48,6 +48,7 @@ func spawnServer(server Server) {
   if err != nil {
 	   log.Fatal("listen error:", err)
    }
+   fmt.Println("Test")
    go http.Serve(listen, nil)
 }
 
@@ -62,18 +63,18 @@ func main() {
 	for i := 0; i < numServers; i++ {
 		go spawnServer(servers[i])
 	}
-
-  client, err := rpc.DialHTTP("tcp", "localhost:50004")
-  if err != nil {
-    log.Fatal("dialing:", err)
-  }
-
-  testMessage := Message{1,1,2}
-  var reply Message
-  //server6 := Server{5, 0, make([]Log, 6), 50005}
-  mesCall := client.Go("Server.Respond", testMessage, reply, nil)
-  replyCall := <-mesCall.Done
-
-  fmt.Println("%v\n", replyCall.Reply)
+  //
+  // client, err := rpc.DialHTTP("tcp", "localhost:50004")
+  // if err != nil {
+  //   log.Fatal("dialing:", err)
+  // }
+  //
+  // testMessage := Message{1,1,2}
+  // var reply Message
+  // //server6 := Server{5, 0, make([]Log, 6), 50005}
+  // mesCall := client.Go("Server.Respond", testMessage, reply, nil)
+  // replyCall := <-mesCall.Done
+  //
+  // fmt.Println("%v\n", replyCall.Reply)
 
 }
