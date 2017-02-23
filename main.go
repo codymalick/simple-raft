@@ -13,12 +13,9 @@ import (
 )
 
 // Reference: https://golang.org/pkg/net/rpc/
-func spawnServer(server Server) {
-  fmt.Printf("Server %v is running\n", server.ID)
-  for i := 1; i > 0; i++ {
-    server.randomTimeout()
-  }
-}
+const (
+	numServers = 5
+)
 
 // Leader Election: Choose a leader
 // Log replication: Make sure all systems have the same view of the log
@@ -33,7 +30,7 @@ func main() {
 	servers := []Server{server0, server1, server2, server3, server4}
 
 	for i := 0; i < numServers; i++ {
-		go spawnServer(servers[i])
+		go servers[i].ServerRun()
     fmt.Printf("Thread %v spawned\n", servers[i].ID)
 	}
 

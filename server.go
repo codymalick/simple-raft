@@ -19,55 +19,88 @@ type Server struct {
 }
 
 // Respond to a request
-func (t *Server) Respond(message *Message, reply *Message) error {
-  message.Value++
+func (s *Server) Respond(message *Message, reply *Message) error {
+  //message.Value++
   *reply = *message
   return nil
 }
 
 // Heartbeat function to let the leader know they are alive
-func (t *Server) Heartbeat() {
+func (s *Server) Heartbeat() {
 
 }
 
 // GetHeartbeat sends a heartbeat to all servers, and requests a heartbeat from
 // all servers
-func (t *Server) GetHeartbeat() {
+func (s *Server) GetHeartbeat() {
 
 }
 
 // Elect respond to an election vote, and wait for confirmation or timeout
-func (t *Server) Elect() {
+// A server cannot vote for a leader who has a log index less than their own
+func (s *Server) Elect() {
 
 }
 
-// StartElection starts an election
-func (t *Server) StartElection() {
+// StartElection starts an election, sends a request for a vote with the new
+// epoch, and index of the last log
+func (s *Server) StartElection() {
 
 }
 
 // GenerateRequest adds an event to the log. The leader should be the only one
 // able to run this
-func (t *Server) GenerateRequest() {
+func (s *Server) GenerateRequest() {
+
+}
+
+// ReplicateRequest sends a new request to be recorded in all server logs
+func (s *Server) ReplicateRequest() {
+
+}
+
+// CommitRequest sets a log to be commited, only increment the index of logs
+// once a log is commmited
+func (s *Server) CommitRequest() {
 
 }
 
 // IncrementEpoch is called for two reason:
 //   1. The server starts a new election
 //   2. The server receives confirmation an election is successful
-func (t *Server) IncrementEpoch() {
-  t.Epoch++
+func (s *Server) IncrementEpoch() {
+  s.Epoch++
 }
 
+// ServerKill deactivates a server
+func (s *Server) ServerKill() {
 
+}
 
-const (
-	numServers = 5
-)
+// ServerStart restarts a server
+func (s *Server) ServerStart() {
 
-// Timeout function
-func (t *Server) randomTimeout() {
-  sleep := rand.Intn(5)
+}
+
+// RandomTimeout runs every timeout period with a lower and upper bound. These
+// bounds can be set in the const section
+func (s *Server) RandomTimeout() {
+  // Min = 5, max = 20
+  sleep := rand.Int() % 20 + 5
   fmt.Printf("sleeping for %v seconds\n", sleep)
   time.Sleep(time.Second * time.Duration(sleep))
+}
+
+// SpawnServer runs the initial setup of the server
+func (s *Server) SpawnServer() {
+  fmt.Printf("Server %v is running\n", s.ID)
+  for i := 1; i > 0; i++ {
+    s.RandomTimeout()
+  }
+}
+
+// ServerRun is the main loop of the server, which starts by activating the server,
+// and looping it through timeouts.
+func (s *Server) ServerRun() {
+  s.SpawnServer()
 }
