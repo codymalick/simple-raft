@@ -20,6 +20,10 @@ func spawnServer(server Server) {
   }
 }
 
+// Leader Election: Choose a leader
+// Log replication: Make sure all systems have the same view of the log
+// Safety: Make sure a leader who is behind cannot be elected
+
 func main() {
 	server0 := Server{0, 0, make([]Log, numServers), 50000, 0}
 	server1 := Server{1, 0, make([]Log, numServers), 50001, 0}
