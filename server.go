@@ -1,9 +1,13 @@
 package main
 
-import(
-  "math/rand"
-  "fmt"
-  "time"
+import (
+	"fmt"
+	"math/rand"
+	"time"
+	"log"
+	"net"
+	"net/rpc"
+	"strconv"
 )
 
 // Server has three possible states:
@@ -12,17 +16,17 @@ import(
 //   3. Leader
 type Server struct {
 	ID    int
-	Epoch int // Life span of the current leader
+	Epoch int   // Life span of the current leader
 	Log   []Log // List of all logs
-  Port  int // tcp Port
-  State int // Current mode of the server
+	Port  string   // tcp Port
+	State int   // Current mode of the server
 }
 
 // Respond to a request
-func (s *Server) Respond(message *Message, reply *Message) error {
-  //message.Value++
-  *reply = *message
-  return nil
+func (s *Server) Respond(line *string, ack *bool) error {
+	fmt.Printf("Server %v: %v\n", s.ID, *line)
+	*ack = true
+	return nil
 }
 
 // Heartbeat function to let the leader know they are alive
@@ -69,7 +73,7 @@ func (s *Server) CommitRequest() {
 //   1. The server starts a new election
 //   2. The server receives confirmation an election is successful
 func (s *Server) IncrementEpoch() {
-  s.Epoch++
+	s.Epoch++
 }
 
 // ServerKill deactivates a server
@@ -85,22 +89,45 @@ func (s *Server) ServerStart() {
 // RandomTimeout runs every timeout period with a lower and upper bound. These
 // bounds can be set in the const section
 func (s *Server) RandomTimeout() {
-  // Min = 5, max = 20
-  sleep := rand.Int() % 20 + 5
-  fmt.Printf("sleeping for %v seconds\n", sleep)
-  time.Sleep(time.Second * time.Duration(sleep))
+	// Min = 5, max = 20
+	sleep := rand.Int() % 10 + 5
+	fmt.Printf("Server %v: %v second timeout started\n", s.ID, sleep)
+	time.Sleep(time.Second * time.Duration(sleep))
 }
 
-// SpawnServer runs the initial setup of the server
-func (s *Server) SpawnServer() {
-  fmt.Printf("Server %v is running\n", s.ID)
-  for i := 1; i > 0; i++ {
-    s.RandomTimeout()
-  }
-}
-
-// ServerRun is the main loop of the server, which starts by activating the server,
+// Run is the main loop of the server, which starts by activating the server,
 // and looping it through timeouts.
-func (s *Server) ServerRun() {
-  s.SpawnServer()
+func (s *Server) Run() {
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	go func() {
+		address, err := net.ResolveTCPAddr("tcp", s.Port)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		inbound, err := net.ListenTCP("tcp", address)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		rpc.Register(s)
+		rpc.Accept(inbound)
+	}()
+
+	client, err := rpc.Dial("tcp", ":50000")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	line := "test " + strconv.Itoa(s.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var reply bool
+	err = client.Call("Server.Respond", line, &reply)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }

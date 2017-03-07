@@ -8,6 +8,6 @@ import (
 type Message struct {
 	Source      int
 	Destination int
-  PrevIndex   int
-  PrevEpoch   int
+	PrevIndex   int
+	PrevEpoch   int
 }

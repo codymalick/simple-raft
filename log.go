@@ -1,17 +1,15 @@
 package main
 
-import (
-
-)
+import ()
 
 // Log records a request
 type Log struct {
-	Value      int
-	Epoch      int
-  Committed  bool
+	Value     int
+	Epoch     int
+	Committed bool
 }
 
 // Commit sets a log to become committed
 func (l *Log) Commit() {
-  l.Committed = true
+	l.Committed = true
 }
