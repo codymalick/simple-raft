@@ -14,7 +14,7 @@ import (
 
 // Reference: https://golang.org/pkg/net/rpc/
 const (
-	numServers = 5
+	numServers = 2
 )
 
 // Leader Election: Choose a leader
@@ -23,18 +23,19 @@ const (
 
 func main() {
 	server0 := Server{0, 0, make([]Log, numServers), ":50000", 0}
-	server1 := Server{1, 0, make([]Log, numServers), "127.0.0.1:50001", 0}
-	server2 := Server{2, 0, make([]Log, numServers), "127.0.0.1:50002", 0}
-	server3 := Server{3, 0, make([]Log, numServers), "127.0.0.1:50003", 0}
-	server4 := Server{4, 0, make([]Log, numServers), "127.0.0.1:50004", 0}
-	servers := []Server{server0, server1, server2, server3, server4}
+	server1 := Server{1, 0, make([]Log, numServers), ":50001", 0}
+	// server2 := Server{2, 0, make([]Log, numServers), ":50002", 0}
+	// server3 := Server{3, 0, make([]Log, numServers), ":50003", 0}
+	// server4 := Server{4, 0, make([]Log, numServers), ":50004", 0}
+	// servers := []Server{server0, server1, server2, server3, server4}
 
+	servers := []Server{server0,server1}
 	for i := 0; i < numServers; i++ {
 		go servers[i].Run()
 	}
 
 	// server0.Run()
 	// Give the threads some time to run
-	time.Sleep(time.Second * 20)
+	time.Sleep(time.Second * 60)
 
 }
