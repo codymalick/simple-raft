@@ -22,16 +22,18 @@ const (
 // Safety: Make sure a leader who is behind cannot be elected
 
 func main() {
-	server0 := Server{0, 0, make([]Log, numServers), ":50000", 0}
-	server1 := Server{1, 0, make([]Log, numServers), ":50001", 0}
-	// server2 := Server{2, 0, make([]Log, numServers), ":50002", 0}
-	// server3 := Server{3, 0, make([]Log, numServers), ":50003", 0}
-	// server4 := Server{4, 0, make([]Log, numServers), ":50004", 0}
-	// servers := []Server{server0, server1, server2, server3, server4}
+	// Server 0 is our test leader
+	server0 := CreateServer(0, ":50000", 2)
+	server1 := CreateServer(1, ":50001", 0)
+	server2 := CreateServer(2, ":50002", 0)
+	server3 := CreateServer(3, ":50003", 0)
+	server4 := CreateServer(4, ":50004", 0)
 
-	servers := []Server{server0,server1}
-	for i := 0; i < numServers; i++ {
-		go servers[i].Run()
+	servers := []*Server{server0,server1,server2,server3,server4}
+
+	for _,val := range servers {
+		val.Servers = servers
+		go val.Run()
 	}
 
 	// server0.Run()
