@@ -14,6 +14,7 @@ import(
 // SendHeartbeatRequest creates and sends a message
 func SendHeartbeatRequest(source *Server, destination *Server) {
     var mes = new(Message)
+    mes.SourceID = source.ID
     mes.Source = source.Port
     mes.Destination = destination.Port
     mes.Index = len(source.Log)

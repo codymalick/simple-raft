@@ -21,18 +21,19 @@ func main() {
 	cmdState := flag.Int("state", 0, "Usage: -state <start-state>")
 	flag.Parse()
 
-	server := CreateServer(*cmdID, *cmdPort, *cmdState, make(chan bool))
+	server := CreateServer(*cmdID, *cmdPort, *cmdState)
 	exit := make(chan bool)
 
 
 	// Server 0 is our test leader
-	server0 := CreateServer(0, ":50000", 0, nil)
-	server1 := CreateServer(1, ":50001", 0, nil)
-	server2 := CreateServer(2, ":50002", 0, nil)
-	server3 := CreateServer(3, ":50003", 0, nil)
-	server4 := CreateServer(4, ":50004", 0, nil)
+	server0 := CreateServer(0, ":50000", 0)
+	server1 := CreateServer(1, ":50001", 0)
+	// server2 := CreateServer(2, ":50002", 0)
+	// server3 := CreateServer(3, ":50003", 0)
+	// server4 := CreateServer(4, ":50004", 0)
 
-	servers := []*Server{server0,server1,server2,server3,server4}
+	//servers := []*Server{server0,server1,server2,server3,server4}
+	servers := []*Server{server0,server1}
 
 	server.Servers = servers
 
