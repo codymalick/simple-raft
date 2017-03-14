@@ -43,6 +43,7 @@ func (s *Server) Heartbeat(message *Message, response *Message) error {
 	response.Index = len(s.Log)
 
 	// Flip bool to let client thread know we sent a heartbeat
+
 	s.Hb <- true
 	return nil
 }
