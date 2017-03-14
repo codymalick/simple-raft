@@ -42,7 +42,8 @@ func SendHeartbeatRequest(source *Server, destination *Server) {
 func GetHeartbeats(s *Server) {
     for _, val := range s.Servers {
         if val.ID != s.ID {
-			SendHeartbeatRequest(s, val)
+            //fmt.Printf("%v, calling %v at %v\n",s.ID, val.ID, val.Port)
+            SendHeartbeatRequest(s, val)
         }
     }
 }

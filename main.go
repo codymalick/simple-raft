@@ -3,13 +3,6 @@
 package main
 
 import (
-	//"fmt"
-	// "net"
-	// "net/rpc"
-	// "strconv"
-	// "log"
-	// "net/http"
-	"time"
 )
 
 // Reference: https://golang.org/pkg/net/rpc/
@@ -22,22 +15,30 @@ const (
 // Safety: Make sure a leader who is behind cannot be elected
 
 func main() {
+	exit := make(chan bool)
+
+	c0 := make(chan bool)
+	c1 := make(chan bool)
+	c2 := make(chan bool)
+	c3 := make(chan bool)
+	c4 := make(chan bool)
+
 	// Server 0 is our test leader
-	server0 := CreateServer(0, ":50000", 2)
-	server1 := CreateServer(1, ":50001", 0)
-	server2 := CreateServer(2, ":50002", 0)
-	server3 := CreateServer(3, ":50003", 0)
-	server4 := CreateServer(4, ":50004", 0)
+	server0 := CreateServer(0, ":50000", 2, c0)
+	server1 := CreateServer(1, ":50001", 0, c1)
+	server2 := CreateServer(2, ":50002", 0, c2)
+	server3 := CreateServer(3, ":50003", 0, c3)
+	server4 := CreateServer(4, ":50004", 0, c4)
 
 	servers := []*Server{server0,server1,server2,server3,server4}
 
 	for _,val := range servers {
 		val.Servers = servers
-		go val.Run()
+
+		// Spawn goroutine
+		go Run(val)
 	}
 
-	// server0.Run()
-	// Give the threads some time to run
-	time.Sleep(time.Second * 60)
-
+	// Wait for anything on the exit channel to quit
+	<- exit
 }

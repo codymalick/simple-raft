@@ -21,16 +21,17 @@ type Server struct {
 	Port  string   // tcp Port
 	State int   // Current mode of the server
 	Servers []*Server
-	Hb 		chan bool
+	Hb    chan bool
 }
 
 // CreateServer makes it easy to quickly create a server
-func CreateServer(id int, port string, startState int) *Server {
+func CreateServer(id int, port string, startState int, c chan bool) *Server {
 	server := new(Server)
 	server.ID = id
 	server.Epoch = 0
 	server.Port = port
 	server.State = startState
+	server.Hb = c
 	return server
 }
 // Heartbeat to a hearbeat request
@@ -40,7 +41,6 @@ func (s *Server) Heartbeat(message *Message, response *Message) error {
 	response.Destination = message.Source
 	response.Epoch = s.Epoch
 	response.Index = len(s.Log)
-
 
 	// Flip bool to let client thread know we sent a heartbeat
 	s.Hb <- true
@@ -120,41 +120,33 @@ func (s *Server) Heartbeat(message *Message, response *Message) error {
 
 // RandomTimeout runs every timeout period with a lower and upper bound. These
 // bounds can be set in the const section
-func RandomTimeout(s *Server, hb chan bool) bool {
+func RandomTimeout(s *Server) bool {
 	// Milliseconds, Min = 5000, max = 10000
 	sleep := rand.Int() % 10000 + 5000
 
-	timeout := make(chan bool, false)
-
-	select {
-	case <-hb:
-		return true
-	case <-timeout:
-		return false
+	for i := sleep; i > 0; i-- {
+		// Every 100 milliseconds, check for an update
+		if i % 100 == 0 {
+			// Check the channel for some input, but don't block on the channel
+			select {
+			case value := <-s.Hb:
+				fmt.Println(s.ID, value)
+				return true
+			default:
+				// Do nothing for now
+			}
+		} else {
+			time.Sleep(time.Millisecond)
+		}
 	}
-	// for i := sleep; i > 0; i-- {
-	// 	// Every 100 milliseconds, check for an update
-	// 	if i % 100 == 0 {
-	// 		//fmt.Printf("Server %v, Checking for request:%v\n", s.ID, i)
-	// 		if s.HbRequest {
-	// 			return true
-	// 		}
-	// 	} else {
-	// 		time.Sleep(time.Millisecond)
-	// 	}
-
-
-	// Timed out, start an election
-	// StartElection(s)
+	return false
 }
 
 // Run is the main loop of the server, which starts by activating the server,
 // and looping it through timeouts.
-func (s *Server) Run() {
+func Run(s *Server) {
 	// Seed random for timeout
 	rand.Seed(time.Now().UTC().UnixNano())
-
-	s.Hb = make(chan bool)
 
 	go func() {
 		address, err := net.ResolveTCPAddr("tcp", s.Port)
@@ -190,9 +182,7 @@ func (s *Server) Run() {
 				fmt.Printf("%v is leader\n", s.ID)
 				// Get heartbeat from all servers
 				time.Sleep(time.Second)
-
 				GetHeartbeats(s)
-				// GetHeartbeat(s)
 		}
 	}
 }
