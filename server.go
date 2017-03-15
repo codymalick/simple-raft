@@ -58,7 +58,7 @@ func (s *Server) Heartbeat(message *Message, response *Message) error {
 
 // Elect respond to an election vote, and wait for confirmation or timeout
 // A server cannot vote for a leader who has a log index less than their own
-func (s *Server) Elect(message *Message, response *Message) {
+func (s *Server) Elect(message *Message, response *Message) error {
 
 	response.SourceID = s.ID
 	response.Source = s.Port
@@ -74,11 +74,12 @@ func (s *Server) Elect(message *Message, response *Message) {
 		response.Vote = true
 		s.VoteRequested <- true
 	}
+	return nil
 }
 
 // StartElection starts an election, sends a request for a vote with the new
 // epoch, and index of the last log
-func (s *Server) RequestVote(source *Server, destination *Server) {
+func RequestVote(source *Server, destination *Server) {
 	var mes = new(Message)
 	mes.Source = source.Port
 	mes.Destination = destination.Port
@@ -88,12 +89,11 @@ func (s *Server) RequestVote(source *Server, destination *Server) {
 	// send response
 	client, err := rpc.Dial("tcp", mes.Destination)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("Cannot connect to %v for vote\n",destination.ID)
+		return
+		//log.Fatal(err)
 	}
 
-	if err != nil {
-		log.Fatal(err)
-	}
 	var reply = new(Message)
 	err = client.Call("Server.Elect", mes, reply)
 	if err != nil {
@@ -107,11 +107,35 @@ func (s *Server) RequestVote(source *Server, destination *Server) {
 
 	fmt.Printf("%v: Vote %v, from %v\n", source.ID, destination.ID, reply.Vote)
 }
-
+// StartElection is called when a server times out.
 func StartElection(s *Server) {
-
+	s.Voted = s.ID
+	s.TotalVotes[s.ID] = true
+	for _, val := range s.Servers {
+		// Let's assume he votes for himself
+        if val.ID != s.ID {
+            //fmt.Printf("%v, calling %v at %v\n",s.ID, val.ID, val.Port)
+            go RequestVote(s, val)
+        }
+		if x := CheckVotes(s); x > numServers/2 {
+			s.State = 2
+			return
+		}
+    }
 }
-//
+
+// CheckVotes for election win
+func CheckVotes(s *Server) int {
+	votes := 0
+	fmt.Println(s.TotalVotes)
+	for _,val := range s.TotalVotes {
+		if val {
+			votes++
+		}
+	}
+	return votes
+}
+
 // // GenerateRequest adds an event to the log. The leader should be the only one
 // // able to run this
 // func (s *Server) GenerateRequest() {
@@ -202,25 +226,34 @@ func Run(s *Server) {
 				default:
 					// Wait for heartbeat request
 					if !RandomTimeout(s) {
-						// start election
-						fmt.Printf("%v Started an election\n", s.ID)
 						// Switch State
 						s.State=1
+					} else {
+						s.Voted = -1
+						s.TotalVotes = []bool{false,false,false,false,false}
 					}
 				}
 
 			// Server is a candidate for leader
 			case 1:
-				// Start an election
-				StartElection(s)
+				select {
+					case <-s.VoteRequested:
+						s.State=0
+					default:
+						// Start an election
+						fmt.Printf("%v Started an election\n", s.ID)
+						StartElection(s)
+				}
+
 
 			// Server is a leader
 			case 2:
 				select {
-				case value :=<-s.VoteRequested:
+				case <-s.VoteRequested:
+					s.Voted = -1
+					s.TotalVotes = []bool{false,false,false,false,false}
 					// If a vote is request while leader, surrender leadership
 					s.State = 0
-					fmt.Printf("Giving up leadership, vote requested %v\n", value)
 				default:
 					fmt.Printf("%v is leader\n", s.ID)
 					// Get heartbeat from all servers
