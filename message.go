@@ -6,8 +6,12 @@ import (
 // Message contains the value of the previous event in the log, and the index of
 // the previous index.
 type Message struct {
-	Source      int
-	Destination int
-	PrevIndex   int
-	PrevEpoch   int
+	SourceID int
+	Source      string
+	Destination string
+	Index   int // Size of log array
+	Epoch   int
+	Vote	bool
+	NumServers int
+	ServerStatus []bool
 }
