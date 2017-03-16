@@ -3,11 +3,12 @@
 package main
 
 import (
+	"flag"
 )
 
 // Reference: https://golang.org/pkg/net/rpc/
 const (
-	numServers = 2
+	numServers = 5
 )
 
 // Leader Election: Choose a leader
@@ -15,29 +16,30 @@ const (
 // Safety: Make sure a leader who is behind cannot be elected
 
 func main() {
+	cmdID := flag.Int("id", 0, "Usage: -id <id>")
+	cmdPort := flag.String("port", ":50000", "Usage: -port <portnumber>")
+	cmdState := flag.Int("state", 0, "Usage: -state <start-state>")
+	flag.Parse()
+
+	server := CreateServer(*cmdID, *cmdPort, *cmdState)
 	exit := make(chan bool)
 
-	c0 := make(chan bool)
-	c1 := make(chan bool)
-	c2 := make(chan bool)
-	c3 := make(chan bool)
-	c4 := make(chan bool)
 
 	// Server 0 is our test leader
-	server0 := CreateServer(0, ":50000", 2, c0)
-	server1 := CreateServer(1, ":50001", 0, c1)
-	server2 := CreateServer(2, ":50002", 0, c2)
-	server3 := CreateServer(3, ":50003", 0, c3)
-	server4 := CreateServer(4, ":50004", 0, c4)
+	server0 := CreateServer(0, ":50000", 0)
+	server1 := CreateServer(1, ":50001", 0)
+	server2 := CreateServer(2, ":50002", 0)
+	server3 := CreateServer(3, ":50003", 0)
+	server4 := CreateServer(4, ":50004", 0)
 
+	//servers := []*Server{server0,server1,server2,server3,server4}
 	servers := []*Server{server0,server1,server2,server3,server4}
 
-	for _,val := range servers {
-		val.Servers = servers
+	server.Servers = servers
 
-		// Spawn goroutine
-		go Run(val)
-	}
+	// Spawn goroutine
+	go Run(server)
+
 
 	// Wait for anything on the exit channel to quit
 	<- exit
