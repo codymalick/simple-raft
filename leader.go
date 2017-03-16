@@ -2,13 +2,8 @@ package main
 
 import(
     "fmt"
-	// "math/rand"
-	// "time"
 	"log"
-	// "net"
 	"net/rpc"
-	// "strconv"
-	// "sync"
 )
 
 // SendHeartbeatRequest creates and sends a message
@@ -47,7 +42,7 @@ func SendHeartbeatRequest(source *Server, destination *Server) {
 	fmt.Printf("Heartbeat from %v, Epoch %v, Index %v, Num Servers %v\n", destination.ID, reply.Epoch, reply.Index, source.NumAliveServers)
 }
 
-// GetHeartbeat sends a heartbeat to all servers, and requests a heartbeat from
+// GetHeartbeats sends a heartbeat to all servers, and requests a heartbeat from
 // all servers
 func GetHeartbeats(s *Server) {
     for _, val := range s.Servers {
