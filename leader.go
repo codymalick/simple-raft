@@ -19,6 +19,8 @@ func SendHeartbeatRequest(source *Server, destination *Server) {
     mes.Destination = destination.Port
     mes.Index = len(source.Log)
     mes.Epoch = source.Epoch
+    mes.NumServers = source.NumAliveServers
+    mes.ServerStatus = source.AliveServers
 
     // send response
     client, err := rpc.Dial("tcp", mes.Destination)
@@ -26,6 +28,10 @@ func SendHeartbeatRequest(source *Server, destination *Server) {
         // Fail silently
         //log.Print(err)
         fmt.Printf("No response from %v\n", destination.ID)
+        if source.AliveServers[destination.ID] == true {
+          source.AliveServers[destination.ID] = false
+          source.NumAliveServers--
+        }
         return
     }
     //
@@ -38,7 +44,7 @@ func SendHeartbeatRequest(source *Server, destination *Server) {
         log.Print(err)
     }
 
-	fmt.Printf("Heartbeat from %v, Epoch %v, Index %v\n", destination.ID, reply.Epoch, reply.Index)
+	fmt.Printf("Heartbeat from %v, Epoch %v, Index %v, Num Servers %v\n", destination.ID, reply.Epoch, reply.Index, source.NumAliveServers)
 }
 
 // GetHeartbeat sends a heartbeat to all servers, and requests a heartbeat from

@@ -21,11 +21,13 @@ type Server struct {
 	Port  string   // tcp Port
 	State int   // Current mode of the server
 	Servers []*Server
+	AliveServers []bool
 	Hb    chan bool
 	VoteRequested chan bool
 	VoteReceived chan bool
 	Voted int
 	TotalVotes []bool
+	NumAliveServers int
 }
 
 // CreateServer makes it easy to quickly create a server
@@ -40,6 +42,8 @@ func CreateServer(id int, port string, startState int) *Server {
 	server.VoteRequested = make(chan bool)
 	server.VoteReceived = make(chan bool)
 	server.TotalVotes = []bool{false,false,false,false,false}
+	server.AliveServers = []bool{true,true,true,true,true}
+	server.NumAliveServers = numServers
 	return server
 }
 // Heartbeat to a hearbeat request
@@ -49,7 +53,11 @@ func (s *Server) Heartbeat(message *Message, response *Message) error {
 	response.Destination = message.Source
 	response.Epoch = s.Epoch
 	response.Index = len(s.Log)
-
+	if message.NumServers != s.NumAliveServers {
+		s.NumAliveServers = message.NumServers
+		fmt.Printf("Server Status updated\n")
+		s.AliveServers = message.ServerStatus
+	}
 	// Flip bool to let client thread know we sent a heartbeat
 
 	s.Hb <- true
@@ -89,7 +97,7 @@ func RequestVote(source *Server, destination *Server) {
 	// send response
 	client, err := rpc.Dial("tcp", mes.Destination)
 	if err != nil {
-		fmt.Printf("Cannot connect to %v for vote\n",destination.ID)
+		//fmt.Printf("Cannot connect to %v for vote\n",destination.ID)
 		return
 		//log.Fatal(err)
 	}
@@ -114,10 +122,12 @@ func StartElection(s *Server) {
 	for _, val := range s.Servers {
 		// Let's assume he votes for himself
         if val.ID != s.ID {
-            //fmt.Printf("%v, calling %v at %v\n",s.ID, val.ID, val.Port)
+					if s.AliveServers[val.ID]{
+            fmt.Printf("%v alive servers\n", s.NumAliveServers)
             go RequestVote(s, val)
+					}
         }
-		if x := CheckVotes(s); x > numServers/2 {
+		if x := CheckVotes(s); x > s.NumAliveServers/2 {
 			s.State = 2
 			return
 		}
