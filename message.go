@@ -12,4 +12,6 @@ type Message struct {
 	Index   int // Size of log array
 	Epoch   int
 	Vote	bool
+	NumServers int
+	ServerStatus []bool
 }
