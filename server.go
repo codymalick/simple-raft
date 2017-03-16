@@ -21,7 +21,7 @@ type Server struct {
 	State           int    // Current mode of the server
 	Servers         []*Server
 	AliveServers    []bool
-	Hb              chan bool
+	Hb              chan int
 	VoteRequested   chan bool
 	VoteReceived    chan bool
 	Voted           int
@@ -36,7 +36,7 @@ func CreateServer(id int, port string, startState int) *Server {
 	server.Epoch = 0
 	server.Port = port
 	server.State = startState
-	server.Hb = make(chan bool)
+	server.Hb = make(chan int)
 	server.Voted = -1
 	server.VoteRequested = make(chan bool)
 	server.VoteReceived = make(chan bool)
@@ -107,15 +107,10 @@ func Run(s *Server) {
 		switch s.State {
 		// Server is a follower
 		case 0:
-			select {
-			case value := <-s.VoteRequested:
-				fmt.Printf("Vote requested %v\n", value)
-			default:
 				// Wait for heartbeat request
 				if !RandomTimeout(s) {
 					// Switch State
 					s.State = 1
-				}
 			}
 
 		// Server is a candidate for leader
@@ -125,7 +120,7 @@ func Run(s *Server) {
 				s.State = 0
 			default:
 				// Start an election
-				fmt.Printf("%v Started an election\n", s.ID)
+				fmt.Printf("%v: election started\n", s.ID)
 				StartElection(s)
 			}
 
@@ -138,7 +133,7 @@ func Run(s *Server) {
 				// If a vote is request while leader, surrender leadership
 				s.State = 0
 			default:
-				fmt.Printf("%v is leader\n", s.ID)
+				fmt.Printf("%v: is leader\n", s.ID)
 				// Get heartbeat from all servers
 				time.Sleep(time.Second)
 				GetHeartbeats(s)

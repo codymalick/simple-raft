@@ -9,8 +9,8 @@ import (
 // RandomTimeout runs every timeout period with a lower and upper bound. These
 // bounds can be set in the const section
 func RandomTimeout(s *Server) bool {
-	// Milliseconds, Min = 5000, max = 10000
-	sleep := rand.Int()%10000 + 5000
+	// Milliseconds, Min = timeout, max = timeout*2
+	sleep := rand.Int() % (timeout*1000) + (timeout*1000)
 
 	for i := sleep; i > 0; i-- {
 		// Every 100 milliseconds, check for an update
@@ -18,7 +18,7 @@ func RandomTimeout(s *Server) bool {
 			// Check the channel for some input, but don't block on the channel
 			select {
 			case value := <-s.Hb:
-				fmt.Println(s.ID, value)
+        fmt.Printf("%v: heartbeat to %v\n", s.ID, value)
 				return true
 			case <-s.VoteRequested:
 				return true
@@ -32,7 +32,7 @@ func RandomTimeout(s *Server) bool {
 	return false
 }
 
-// Heartbeat to a hearbeat request
+// Heartbeat responds to a hearbeat request
 func (s *Server) Heartbeat(message *Message, response *Message) error {
 
 	response.Source = s.Port
@@ -46,7 +46,7 @@ func (s *Server) Heartbeat(message *Message, response *Message) error {
 	}
 	// Flip bool to let client thread know we sent a heartbeat
 
-	s.Hb <- true
+	s.Hb <- message.SourceID
 	return nil
 }
 

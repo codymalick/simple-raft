@@ -10,10 +10,10 @@ import (
 func StartElection(s *Server) {
 	s.Voted = s.ID
 	s.TotalVotes[s.ID] = true
+  fmt.Printf("%v alive servers\n", s.NumAliveServers)
 	for _, val := range s.Servers {
 		// Let's assume he votes for himself
 		if val.ID != s.ID && s.AliveServers[val.ID] {
-			fmt.Printf("%v alive servers\n", s.NumAliveServers)
 			go RequestVote(s, val)
 		}
 	}
@@ -63,9 +63,9 @@ func RequestVote(source *Server, destination *Server) {
 	}
 
 	if reply.Vote {
+    fmt.Printf("%v: yes vote from %v\n", source.ID, destination.ID)
 		source.TotalVotes[destination.ID] = true
 		source.VoteReceived <- true
 	}
-
-	fmt.Printf("%v: Vote %v, from %v\n", source.ID, destination.ID, reply.Vote)
+  fmt.Printf("%v: no vote from %v\n", source.ID, destination.ID)
 }

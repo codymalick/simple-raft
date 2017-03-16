@@ -8,6 +8,7 @@ import (
 
 const (
 	numServers = 5
+	timeout = 5 //seconds
 )
 
 // Leader Election: Choose a leader
